@@ -1,0 +1,204 @@
+{
+  "name": "jarvis-ai-assistant",
+  "displayName": "Jarvis AI Assistant",
+  "version": "0.1.0",
+  "description": "A powerful, free AI assistant for VSCode that provides code completion, answers programming questions, assists with debugging, and helps with project scaffolding.",
+  "main": "./out/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/athithyansureh/jarvis-ai-assistant.git"
+  },
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "jarvis.askQuestion",
+        "title": "Jarvis: Ask a Question"
+      },
+      {
+        "command": "jarvis.completeCode",
+        "title": "Jarvis: Complete Code"
+      },
+      {
+        "command": "jarvis.debugCode",
+        "title": "Jarvis: Debug Code"
+      },
+      {
+        "command": "jarvis.generateProject",
+        "title": "Jarvis: Generate Project"
+      },
+      {
+        "command": "jarvis.refactorCode",
+        "title": "Jarvis: Refactor Code"
+      },
+      {
+        "command": "jarvis.generateTests",
+        "title": "Jarvis: Generate Tests"
+      },
+      {
+        "command": "jarvis.generateDocs",
+        "title": "Jarvis: Generate Documentation"
+      },
+      {
+        "command": "jarvis.openSettings",
+        "title": "Jarvis: Open Settings"
+      },
+      {
+        "command": "jarvis.manageModels",
+        "title": "Jarvis: Manage AI Models"
+      },
+      {
+        "command": "jarvis.viewConversationHistory",
+        "title": "Jarvis: View Conversation History"
+      }
+    ],
+    "configuration": {
+      "title": "Jarvis AI Assistant",
+      "properties": {
+        "jarvis.model": {
+          "type": "string",
+          "default": "llama3",
+          "description": "The Ollama model to use for AI features",
+          "enum": [
+            "llama3",
+            "llama3:8b",
+            "llama3:70b",
+            "codellama",
+            "mistral",
+            "phi3",
+            "gemma"
+          ],
+          "enumDescriptions": [
+            "Llama 3 (default, balanced performance)",
+            "Llama 3 8B (faster, less accurate)",
+            "Llama 3 70B (slower, more accurate)",
+            "CodeLlama (specialized for code)",
+            "Mistral (good performance)",
+            "Phi-3 (Microsoft's model)",
+            "Gemma (Google's model)"
+          ]
+        },
+        "jarvis.ollamaUrl": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "URL of the Ollama API"
+        },
+        "jarvis.temperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature for AI responses (0 = deterministic, 2 = very creative)"
+        },
+        "jarvis.maxTokens": {
+          "type": "number",
+          "default": 2048,
+          "minimum": 256,
+          "maximum": 8192,
+          "description": "Maximum number of tokens for AI responses"
+        },
+        "jarvis.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Jarvis in the status bar"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "jarvis.askQuestion",
+        "key": "ctrl+shift+j",
+        "mac": "cmd+shift+j"
+      },
+      {
+        "command": "jarvis.completeCode",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "editorTextFocus",
+          "command": "jarvis.askQuestion",
+          "group": "jarvis@1"
+        },
+        {
+          "when": "editorTextFocus",
+          "command": "jarvis.completeCode",
+          "group": "jarvis@2"
+        },
+        {
+          "when": "editorTextFocus",
+          "command": "jarvis.debugCode",
+          "group": "jarvis@3"
+        },
+        {
+          "when": "editorTextFocus",
+          "command": "jarvis.refactorCode",
+          "group": "jarvis@4"
+        },
+        {
+          "when": "editorTextFocus",
+          "command": "jarvis.generateTests",
+          "group": "jarvis@5"
+        },
+        {
+          "when": "editorTextFocus",
+          "command": "jarvis.generateDocs",
+          "group": "jarvis@6"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "lint": "eslint src --ext ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "prepare-release": "npm run lint && npm run test && npm run package"
+  },
+  "keywords": [
+    "ai",
+    "assistant",
+    "code completion",
+    "debugging",
+    "project scaffolding",
+    "jarvis"
+  ],
+  "author": "Athithyan Suresh",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/vscode": "^1.100.0",
+    "@typescript-eslint/eslint-plugin": "^8.33.1",
+    "@typescript-eslint/parser": "^8.33.1",
+    "@vscode/vsce": "^3.5.0",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.4.1",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "vscode-test": "^1.6.1"
+  },
+  "dependencies": {
+    "@types/node-fetch": "^2.6.12",
+    "node-fetch": "^2.7.0",
+    "ws": "^8.13.0"
+  }
+}
