@@ -317,7 +317,7 @@ export class OllamaService {
     let fullResponse = '';
 
     // Process the stream
-    const processStream = async () => {
+    const processStream = async (): Promise<void> => {
       response.body.on('data', (chunk: Buffer) => {
         // Convert the chunk to text
         const chunkText = chunk.toString('utf8');
