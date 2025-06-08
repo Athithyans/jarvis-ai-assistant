@@ -2,6 +2,7 @@
   "name": "jarvis-ai-assistant",
   "displayName": "Jarvis AI Assistant",
   "version": "0.1.0",
+  "publisher": "athithyansuresh",
   "description": "A powerful, free AI assistant for VSCode that provides code completion, answers programming questions, assists with debugging, and helps with project scaffolding.",
   "main": "./out/extension.js",
   "repository": {
