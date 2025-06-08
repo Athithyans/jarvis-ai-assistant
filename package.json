@@ -7,7 +7,7 @@
   "main": "./out/extension.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/athithyansureh/jarvis-ai-assistant.git"
+    "url": "https://github.com/athithyans/jarvis-ai-assistant.git"
   },
   "engines": {
     "vscode": "^1.100.0"
