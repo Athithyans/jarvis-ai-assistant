@@ -1,5 +1,9 @@
 # Jarvis AI Assistant for VSCode
 
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/Athithyans/jarvis-ai-assistant/releases/tag/v0.1.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub issues](https://img.shields.io/github/issues/Athithyans/jarvis-ai-assistant)](https://github.com/Athithyans/jarvis-ai-assistant/issues)
+
 A powerful, free AI assistant for VSCode that provides code completion, answers programming questions, assists with debugging, helps with project scaffolding, and much more - all running locally on your machine.
 
 ## Features
@@ -48,10 +52,24 @@ Jarvis supports a wide range of programming languages and frameworks, including:
 
 ### Installation
 
+#### From VS Code Marketplace (Recommended)
 1. Install [Ollama](https://ollama.ai/download) on your machine
-2. Install the Jarvis AI Assistant extension from the VSCode marketplace
-3. Restart VSCode
-4. When first activated, Jarvis will download the necessary AI model (this may take a few minutes)
+2. Open VS Code
+3. Go to Extensions (Ctrl+Shift+X or Cmd+Shift+X on Mac)
+4. Search for "Jarvis AI Assistant"
+5. Click "Install"
+6. Restart VS Code
+7. When first activated, Jarvis will download the necessary AI model (this may take a few minutes)
+
+#### Manual Installation
+1. Install [Ollama](https://ollama.ai/download) on your machine
+2. Download the latest .vsix file from the [GitHub releases page](https://github.com/Athithyans/jarvis-ai-assistant/releases)
+3. Open VS Code
+4. Go to Extensions (Ctrl+Shift+X or Cmd+Shift+X on Mac)
+5. Click the "..." menu in the top-right of the Extensions panel
+6. Select "Install from VSIX..."
+7. Choose the downloaded .vsix file
+8. Restart VS Code
 
 ### Usage
 
@@ -127,6 +145,14 @@ MIT
 ## Author
 
 Athithyan Suresh
+
+## Support
+
+If you find Jarvis AI Assistant helpful, please consider:
+- Starring the [GitHub repository](https://github.com/Athithyans/jarvis-ai-assistant)
+- Sharing it with your friends and colleagues
+- [Reporting issues](https://github.com/Athithyans/jarvis-ai-assistant/issues) if you encounter any problems
+- Contributing to the project
 
 ---
 
