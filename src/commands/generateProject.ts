@@ -4,179 +4,193 @@ import * as path from 'path';
 import { LocalModelService } from '../services/localModelService';
 
 export class GenerateProjectCommand {
-    private modelService: LocalModelService;
-    
-    constructor(modelService: LocalModelService) {
-        this.modelService = modelService;
+  private modelService: LocalModelService;
+
+  constructor(modelService: LocalModelService) {
+    this.modelService = modelService;
+  }
+
+  public async execute(): Promise<void> {
+    // Ask for project type
+    const projectType = await vscode.window.showQuickPick(
+      [
+        { label: 'React Application', value: 'react' },
+        { label: 'Node.js API', value: 'node-api' },
+        { label: 'Express.js Server', value: 'express' },
+        { label: 'React Native App', value: 'react-native' },
+        { label: 'Vue.js Application', value: 'vue' },
+        { label: 'Angular Application', value: 'angular' },
+        { label: 'Python Flask API', value: 'flask' },
+        { label: 'Django Application', value: 'django' },
+        { label: 'HTML/CSS/JS Static Site', value: 'static' },
+      ],
+      {
+        placeHolder: 'Select the type of project to generate',
+      }
+    );
+
+    if (!projectType) {
+      return; // User cancelled
     }
-    
-    public async execute(): Promise<void> {
-        // Ask for project type
-        const projectType = await vscode.window.showQuickPick([
-            { label: 'React Application', value: 'react' },
-            { label: 'Node.js API', value: 'node-api' },
-            { label: 'Express.js Server', value: 'express' },
-            { label: 'React Native App', value: 'react-native' },
-            { label: 'Vue.js Application', value: 'vue' },
-            { label: 'Angular Application', value: 'angular' },
-            { label: 'Python Flask API', value: 'flask' },
-            { label: 'Django Application', value: 'django' },
-            { label: 'HTML/CSS/JS Static Site', value: 'static' }
-        ], {
-            placeHolder: 'Select the type of project to generate'
-        });
-        
-        if (!projectType) {
-            return; // User cancelled
+
+    // Ask for project name
+    const projectName = await vscode.window.showInputBox({
+      prompt: 'Enter a name for your project',
+      placeHolder: 'my-awesome-project',
+      validateInput: value => {
+        if (!value) {
+          return 'Project name is required';
         }
-        
-        // Ask for project name
-        const projectName = await vscode.window.showInputBox({
-            prompt: 'Enter a name for your project',
-            placeHolder: 'my-awesome-project',
-            validateInput: (value) => {
-                if (!value) {
-                    return 'Project name is required';
-                }
-                if (!/^[a-z0-9-_]+$/i.test(value)) {
-                    return 'Project name can only contain letters, numbers, hyphens, and underscores';
-                }
-                return null;
-            }
-        });
-        
-        if (!projectName) {
-            return; // User cancelled
+        if (!/^[a-z0-9-_]+$/i.test(value)) {
+          return 'Project name can only contain letters, numbers, hyphens, and underscores';
         }
-        
-        // Ask for project location
-        const folderUris = await vscode.window.showOpenDialog({
-            canSelectFiles: false,
-            canSelectFolders: true,
-            canSelectMany: false,
-            openLabel: 'Select Location'
-        });
-        
-        if (!folderUris || folderUris.length === 0) {
-            return; // User cancelled
-        }
-        
-        const projectLocation = folderUris[0].fsPath;
-        const projectPath = path.join(projectLocation, projectName);
-        
-        // Check if directory already exists
-        if (fs.existsSync(projectPath)) {
-            const overwrite = await vscode.window.showWarningMessage(
-                `A directory named "${projectName}" already exists at the selected location. Do you want to overwrite it?`,
-                'Yes', 'No'
-            );
-            
-            if (overwrite !== 'Yes') {
-                return; // User cancelled
-            }
-        }
-        
-        // Show progress indicator
-        vscode.window.withProgress({
-            location: vscode.ProgressLocation.Notification,
-            title: `Jarvis is generating your ${projectType.label} project...`,
-            cancellable: false
-        }, async (progress) => {
-            try {
-                // Get project structure from the model service
-                const projectStructure = await this.modelService.generateProject(projectType.value, projectName);
-                
-                // Create project directory
-                if (!fs.existsSync(projectPath)) {
-                    fs.mkdirSync(projectPath, { recursive: true });
-                }
-                
-                // For demonstration purposes, we'll create a simple project structure
-                // In a real implementation, you would parse the projectStructure response
-                // and create the actual files and directories
-                
-                // Create basic project structure based on project type
-                this.createBasicProjectStructure(projectPath, projectType.value, projectName);
-                
-                vscode.window.showInformationMessage(`Project "${projectName}" has been generated successfully!`);
-                
-                // Open the project in a new window
-                const openInNewWindow = await vscode.window.showInformationMessage(
-                    'Would you like to open the project in a new window?',
-                    'Yes', 'No'
-                );
-                
-                if (openInNewWindow === 'Yes') {
-                    vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(projectPath), true);
-                }
-            } catch (error) {
-                vscode.window.showErrorMessage(`Jarvis encountered an error: ${error}`);
-            }
-        });
+        return null;
+      },
+    });
+
+    if (!projectName) {
+      return; // User cancelled
     }
-    
-    private createBasicProjectStructure(projectPath: string, projectType: string, projectName: string): void {
-        // Create basic structure based on project type
-        switch (projectType) {
-            case 'react':
-                this.createReactProject(projectPath, projectName);
-                break;
-            case 'node-api':
-                this.createNodeApiProject(projectPath, projectName);
-                break;
-            case 'express':
-                this.createExpressProject(projectPath, projectName);
-                break;
-            case 'static':
-                this.createStaticProject(projectPath, projectName);
-                break;
-            default:
-                // For other project types, create a basic structure
-                this.createGenericProject(projectPath, projectName, projectType);
-                break;
-        }
+
+    // Ask for project location
+    const folderUris = await vscode.window.showOpenDialog({
+      canSelectFiles: false,
+      canSelectFolders: true,
+      canSelectMany: false,
+      openLabel: 'Select Location',
+    });
+
+    if (!folderUris || folderUris.length === 0) {
+      return; // User cancelled
     }
-    
-    private createReactProject(projectPath: string, projectName: string): void {
-        // Create directories
-        fs.mkdirSync(path.join(projectPath, 'src'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'src', 'components'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'src', 'hooks'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'src', 'context'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'public'), { recursive: true });
-        
-        // Create package.json
-        const packageJson = {
-            name: projectName,
-            version: '0.1.0',
-            private: true,
-            dependencies: {
-                'react': '^18.2.0',
-                'react-dom': '^18.2.0',
-                'react-scripts': '5.0.1'
-            },
-            scripts: {
-                'start': 'react-scripts start',
-                'build': 'react-scripts build',
-                'test': 'react-scripts test',
-                'eject': 'react-scripts eject'
-            },
-            eslintConfig: {
-                extends: ['react-app', 'react-app/jest']
-            },
-            browserslist: {
-                production: ['>0.2%', 'not dead', 'not op_mini all'],
-                development: ['last 1 chrome version', 'last 1 firefox version', 'last 1 safari version']
-            }
-        };
-        
-        fs.writeFileSync(
-            path.join(projectPath, 'package.json'),
-            JSON.stringify(packageJson, null, 2)
-        );
-        
-        // Create index.js
-        const indexJs = `import React from 'react';
+
+    const projectLocation = folderUris[0].fsPath;
+    const projectPath = path.join(projectLocation, projectName);
+
+    // Check if directory already exists
+    if (fs.existsSync(projectPath)) {
+      const overwrite = await vscode.window.showWarningMessage(
+        `A directory named "${projectName}" already exists at the selected location. Do you want to overwrite it?`,
+        'Yes',
+        'No'
+      );
+
+      if (overwrite !== 'Yes') {
+        return; // User cancelled
+      }
+    }
+
+    // Show progress indicator
+    vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Jarvis is generating your ${projectType.label} project...`,
+        cancellable: false,
+      },
+      async progress => {
+        try {
+          // Get project structure from the model service
+          const projectStructure = await this.modelService.generateProject(
+            projectType.value,
+            projectName
+          );
+
+          // Create project directory
+          if (!fs.existsSync(projectPath)) {
+            fs.mkdirSync(projectPath, { recursive: true });
+          }
+
+          // For demonstration purposes, we'll create a simple project structure
+          // In a real implementation, you would parse the projectStructure response
+          // and create the actual files and directories
+
+          // Create basic project structure based on project type
+          this.createBasicProjectStructure(projectPath, projectType.value, projectName);
+
+          vscode.window.showInformationMessage(
+            `Project "${projectName}" has been generated successfully!`
+          );
+
+          // Open the project in a new window
+          const openInNewWindow = await vscode.window.showInformationMessage(
+            'Would you like to open the project in a new window?',
+            'Yes',
+            'No'
+          );
+
+          if (openInNewWindow === 'Yes') {
+            vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(projectPath), true);
+          }
+        } catch (error) {
+          vscode.window.showErrorMessage(`Jarvis encountered an error: ${error}`);
+        }
+      }
+    );
+  }
+
+  private createBasicProjectStructure(
+    projectPath: string,
+    projectType: string,
+    projectName: string
+  ): void {
+    // Create basic structure based on project type
+    switch (projectType) {
+      case 'react':
+        this.createReactProject(projectPath, projectName);
+        break;
+      case 'node-api':
+        this.createNodeApiProject(projectPath, projectName);
+        break;
+      case 'express':
+        this.createExpressProject(projectPath, projectName);
+        break;
+      case 'static':
+        this.createStaticProject(projectPath, projectName);
+        break;
+      default:
+        // For other project types, create a basic structure
+        this.createGenericProject(projectPath, projectName, projectType);
+        break;
+    }
+  }
+
+  private createReactProject(projectPath: string, projectName: string): void {
+    // Create directories
+    fs.mkdirSync(path.join(projectPath, 'src'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'src', 'components'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'src', 'hooks'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'src', 'context'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'public'), { recursive: true });
+
+    // Create package.json
+    const packageJson = {
+      name: projectName,
+      version: '0.1.0',
+      private: true,
+      dependencies: {
+        react: '^18.2.0',
+        'react-dom': '^18.2.0',
+        'react-scripts': '5.0.1',
+      },
+      scripts: {
+        start: 'react-scripts start',
+        build: 'react-scripts build',
+        test: 'react-scripts test',
+        eject: 'react-scripts eject',
+      },
+      eslintConfig: {
+        extends: ['react-app', 'react-app/jest'],
+      },
+      browserslist: {
+        production: ['>0.2%', 'not dead', 'not op_mini all'],
+        development: ['last 1 chrome version', 'last 1 firefox version', 'last 1 safari version'],
+      },
+    };
+
+    fs.writeFileSync(path.join(projectPath, 'package.json'), JSON.stringify(packageJson, null, 2));
+
+    // Create index.js
+    const indexJs = `import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
@@ -188,11 +202,11 @@ root.render(
   </React.StrictMode>
 );
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'src', 'index.js'), indexJs);
-        
-        // Create App.js
-        const appJs = `import React from 'react';
+
+    fs.writeFileSync(path.join(projectPath, 'src', 'index.js'), indexJs);
+
+    // Create App.js
+    const appJs = `import React from 'react';
 import './App.css';
 
 function App() {
@@ -213,11 +227,11 @@ function App() {
 
 export default App;
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'src', 'App.js'), appJs);
-        
-        // Create App.css
-        const appCss = `.App {
+
+    fs.writeFileSync(path.join(projectPath, 'src', 'App.js'), appJs);
+
+    // Create App.css
+    const appCss = `.App {
   text-align: center;
 }
 
@@ -232,11 +246,11 @@ export default App;
   color: white;
 }
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'src', 'App.css'), appCss);
-        
-        // Create index.css
-        const indexCss = `body {
+
+    fs.writeFileSync(path.join(projectPath, 'src', 'App.css'), appCss);
+
+    // Create index.css
+    const indexCss = `body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -250,11 +264,11 @@ code {
     monospace;
 }
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'src', 'index.css'), indexCss);
-        
-        // Create README.md
-        const readmeMd = `# ${projectName}
+
+    fs.writeFileSync(path.join(projectPath, 'src', 'index.css'), indexCss);
+
+    // Create README.md
+    const readmeMd = `# ${projectName}
 
 This project was generated with Jarvis AI Assistant.
 
@@ -275,11 +289,11 @@ Launches the test runner in the interactive watch mode.
 
 Builds the app for production to the \`build\` folder.
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'README.md'), readmeMd);
-        
-        // Create public/index.html
-        const indexHtml = `<!DOCTYPE html>
+
+    fs.writeFileSync(path.join(projectPath, 'README.md'), readmeMd);
+
+    // Create public/index.html
+    const indexHtml = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -297,46 +311,43 @@ Builds the app for production to the \`build\` folder.
   </body>
 </html>
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'public', 'index.html'), indexHtml);
-    }
-    
-    private createNodeApiProject(projectPath: string, projectName: string): void {
-        // Create directories
-        fs.mkdirSync(path.join(projectPath, 'src'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'src', 'controllers'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'src', 'models'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'src', 'routes'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'src', 'middleware'), { recursive: true });
-        
-        // Create package.json
-        const packageJson = {
-            name: projectName,
-            version: '1.0.0',
-            description: 'Node.js API generated by Jarvis AI Assistant',
-            main: 'src/index.js',
-            scripts: {
-                'start': 'node src/index.js',
-                'dev': 'nodemon src/index.js'
-            },
-            dependencies: {
-                'express': '^4.18.2',
-                'cors': '^2.8.5',
-                'dotenv': '^16.0.3',
-                'helmet': '^6.0.1'
-            },
-            devDependencies: {
-                'nodemon': '^2.0.20'
-            }
-        };
-        
-        fs.writeFileSync(
-            path.join(projectPath, 'package.json'),
-            JSON.stringify(packageJson, null, 2)
-        );
-        
-        // Create index.js
-        const indexJs = `const express = require('express');
+
+    fs.writeFileSync(path.join(projectPath, 'public', 'index.html'), indexHtml);
+  }
+
+  private createNodeApiProject(projectPath: string, projectName: string): void {
+    // Create directories
+    fs.mkdirSync(path.join(projectPath, 'src'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'src', 'controllers'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'src', 'models'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'src', 'routes'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'src', 'middleware'), { recursive: true });
+
+    // Create package.json
+    const packageJson = {
+      name: projectName,
+      version: '1.0.0',
+      description: 'Node.js API generated by Jarvis AI Assistant',
+      main: 'src/index.js',
+      scripts: {
+        start: 'node src/index.js',
+        dev: 'nodemon src/index.js',
+      },
+      dependencies: {
+        express: '^4.18.2',
+        cors: '^2.8.5',
+        dotenv: '^16.0.3',
+        helmet: '^6.0.1',
+      },
+      devDependencies: {
+        nodemon: '^2.0.20',
+      },
+    };
+
+    fs.writeFileSync(path.join(projectPath, 'package.json'), JSON.stringify(packageJson, null, 2));
+
+    // Create index.js
+    const indexJs = `const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
@@ -362,11 +373,11 @@ app.listen(PORT, () => {
   console.log(\`Server running on port \${PORT}\`);
 });
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'src', 'index.js'), indexJs);
-        
-        // Create routes/api.js
-        const apiRoutes = `const express = require('express');
+
+    fs.writeFileSync(path.join(projectPath, 'src', 'index.js'), indexJs);
+
+    // Create routes/api.js
+    const apiRoutes = `const express = require('express');
 const router = express.Router();
 
 // Example route
@@ -376,18 +387,18 @@ router.get('/hello', (req, res) => {
 
 module.exports = router;
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'src', 'routes', 'api.js'), apiRoutes);
-        
-        // Create .env file
-        const envFile = `PORT=3000
+
+    fs.writeFileSync(path.join(projectPath, 'src', 'routes', 'api.js'), apiRoutes);
+
+    // Create .env file
+    const envFile = `PORT=3000
 NODE_ENV=development
 `;
-        
-        fs.writeFileSync(path.join(projectPath, '.env'), envFile);
-        
-        // Create README.md
-        const readmeMd = `# ${projectName}
+
+    fs.writeFileSync(path.join(projectPath, '.env'), envFile);
+
+    // Create README.md
+    const readmeMd = `# ${projectName}
 
 This Node.js API was generated with Jarvis AI Assistant.
 
@@ -410,49 +421,46 @@ This Node.js API was generated with Jarvis AI Assistant.
 - GET / - Welcome message
 - GET /api/hello - Example endpoint
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'README.md'), readmeMd);
-    }
-    
-    private createExpressProject(projectPath: string, projectName: string): void {
-        // Create directories
-        fs.mkdirSync(path.join(projectPath, 'src'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'src', 'controllers'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'src', 'routes'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'src', 'middleware'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'public'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'views'), { recursive: true });
-        
-        // Create package.json
-        const packageJson = {
-            name: projectName,
-            version: '1.0.0',
-            description: 'Express.js server generated by Jarvis AI Assistant',
-            main: 'src/app.js',
-            scripts: {
-                'start': 'node src/app.js',
-                'dev': 'nodemon src/app.js'
-            },
-            dependencies: {
-                'express': '^4.18.2',
-                'ejs': '^3.1.8',
-                'cors': '^2.8.5',
-                'dotenv': '^16.0.3',
-                'helmet': '^6.0.1',
-                'morgan': '^1.10.0'
-            },
-            devDependencies: {
-                'nodemon': '^2.0.20'
-            }
-        };
-        
-        fs.writeFileSync(
-            path.join(projectPath, 'package.json'),
-            JSON.stringify(packageJson, null, 2)
-        );
-        
-        // Create app.js
-        const appJs = `const express = require('express');
+
+    fs.writeFileSync(path.join(projectPath, 'README.md'), readmeMd);
+  }
+
+  private createExpressProject(projectPath: string, projectName: string): void {
+    // Create directories
+    fs.mkdirSync(path.join(projectPath, 'src'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'src', 'controllers'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'src', 'routes'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'src', 'middleware'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'public'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'views'), { recursive: true });
+
+    // Create package.json
+    const packageJson = {
+      name: projectName,
+      version: '1.0.0',
+      description: 'Express.js server generated by Jarvis AI Assistant',
+      main: 'src/app.js',
+      scripts: {
+        start: 'node src/app.js',
+        dev: 'nodemon src/app.js',
+      },
+      dependencies: {
+        express: '^4.18.2',
+        ejs: '^3.1.8',
+        cors: '^2.8.5',
+        dotenv: '^16.0.3',
+        helmet: '^6.0.1',
+        morgan: '^1.10.0',
+      },
+      devDependencies: {
+        nodemon: '^2.0.20',
+      },
+    };
+
+    fs.writeFileSync(path.join(projectPath, 'package.json'), JSON.stringify(packageJson, null, 2));
+
+    // Create app.js
+    const appJs = `const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -484,11 +492,11 @@ app.listen(PORT, () => {
   console.log(\`Server running on port \${PORT}\`);
 });
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'src', 'app.js'), appJs);
-        
-        // Create routes/index.js
-        const indexRoutes = `const express = require('express');
+
+    fs.writeFileSync(path.join(projectPath, 'src', 'app.js'), appJs);
+
+    // Create routes/index.js
+    const indexRoutes = `const express = require('express');
 const router = express.Router();
 
 // Home page
@@ -503,11 +511,11 @@ router.get('/about', (req, res) => {
 
 module.exports = router;
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'src', 'routes', 'index.js'), indexRoutes);
-        
-        // Create views/index.ejs
-        const indexEjs = `<!DOCTYPE html>
+
+    fs.writeFileSync(path.join(projectPath, 'src', 'routes', 'index.js'), indexRoutes);
+
+    // Create views/index.ejs
+    const indexEjs = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -538,11 +546,11 @@ module.exports = router;
 </body>
 </html>
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'views', 'index.ejs'), indexEjs);
-        
-        // Create views/about.ejs
-        const aboutEjs = `<!DOCTYPE html>
+
+    fs.writeFileSync(path.join(projectPath, 'views', 'index.ejs'), indexEjs);
+
+    // Create views/about.ejs
+    const aboutEjs = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -574,12 +582,12 @@ module.exports = router;
 </body>
 </html>
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'views', 'about.ejs'), aboutEjs);
-        
-        // Create public/css/style.css
-        fs.mkdirSync(path.join(projectPath, 'public', 'css'), { recursive: true });
-        const styleCss = `* {
+
+    fs.writeFileSync(path.join(projectPath, 'views', 'about.ejs'), aboutEjs);
+
+    // Create public/css/style.css
+    fs.mkdirSync(path.join(projectPath, 'public', 'css'), { recursive: true });
+    const styleCss = `* {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -635,28 +643,28 @@ footer {
   border-radius: 5px;
 }
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'public', 'css', 'style.css'), styleCss);
-        
-        // Create public/js/main.js
-        fs.mkdirSync(path.join(projectPath, 'public', 'js'), { recursive: true });
-        const mainJs = `// Main JavaScript file
+
+    fs.writeFileSync(path.join(projectPath, 'public', 'css', 'style.css'), styleCss);
+
+    // Create public/js/main.js
+    fs.mkdirSync(path.join(projectPath, 'public', 'js'), { recursive: true });
+    const mainJs = `// Main JavaScript file
 console.log('${projectName} - Created with Jarvis AI Assistant');
 
 // Add your JavaScript code here
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'public', 'js', 'main.js'), mainJs);
-        
-        // Create .env file
-        const envFile = `PORT=3000
+
+    fs.writeFileSync(path.join(projectPath, 'public', 'js', 'main.js'), mainJs);
+
+    // Create .env file
+    const envFile = `PORT=3000
 NODE_ENV=development
 `;
-        
-        fs.writeFileSync(path.join(projectPath, '.env'), envFile);
-        
-        // Create README.md
-        const readmeMd = `# ${projectName}
+
+    fs.writeFileSync(path.join(projectPath, '.env'), envFile);
+
+    // Create README.md
+    const readmeMd = `# ${projectName}
 
 This Express.js application was generated with Jarvis AI Assistant.
 
@@ -679,18 +687,18 @@ This Express.js application was generated with Jarvis AI Assistant.
 - Home: http://localhost:3000/
 - About: http://localhost:3000/about
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'README.md'), readmeMd);
-    }
-    
-    private createStaticProject(projectPath: string, projectName: string): void {
-        // Create directories
-        fs.mkdirSync(path.join(projectPath, 'css'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'js'), { recursive: true });
-        fs.mkdirSync(path.join(projectPath, 'images'), { recursive: true });
-        
-        // Create index.html
-        const indexHtml = `<!DOCTYPE html>
+
+    fs.writeFileSync(path.join(projectPath, 'README.md'), readmeMd);
+  }
+
+  private createStaticProject(projectPath: string, projectName: string): void {
+    // Create directories
+    fs.mkdirSync(path.join(projectPath, 'css'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'js'), { recursive: true });
+    fs.mkdirSync(path.join(projectPath, 'images'), { recursive: true });
+
+    // Create index.html
+    const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -746,11 +754,11 @@ This Express.js application was generated with Jarvis AI Assistant.
     <script src="js/main.js"></script>
 </body>
 </html>`;
-        
-        fs.writeFileSync(path.join(projectPath, 'index.html'), indexHtml);
-        
-        // Create about.html
-        const aboutHtml = `<!DOCTYPE html>
+
+    fs.writeFileSync(path.join(projectPath, 'index.html'), indexHtml);
+
+    // Create about.html
+    const aboutHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -786,11 +794,11 @@ This Express.js application was generated with Jarvis AI Assistant.
     <script src="js/main.js"></script>
 </body>
 </html>`;
-        
-        fs.writeFileSync(path.join(projectPath, 'about.html'), aboutHtml);
-        
-        // Create contact.html
-        const contactHtml = `<!DOCTYPE html>
+
+    fs.writeFileSync(path.join(projectPath, 'about.html'), aboutHtml);
+
+    // Create contact.html
+    const contactHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -839,11 +847,11 @@ This Express.js application was generated with Jarvis AI Assistant.
     <script src="js/main.js"></script>
 </body>
 </html>`;
-        
-        fs.writeFileSync(path.join(projectPath, 'contact.html'), contactHtml);
-        
-        // Create CSS
-        const stylesCss = `/* Reset and base styles */
+
+    fs.writeFileSync(path.join(projectPath, 'contact.html'), contactHtml);
+
+    // Create CSS
+    const stylesCss = `/* Reset and base styles */
 * {
     margin: 0;
     padding: 0;
@@ -1105,11 +1113,11 @@ footer {
         max-width: 100%;
     }
 }`;
-        
-        fs.writeFileSync(path.join(projectPath, 'css', 'styles.css'), stylesCss);
-        
-        // Create JavaScript
-        const mainJs = `// Main JavaScript file
+
+    fs.writeFileSync(path.join(projectPath, 'css', 'styles.css'), stylesCss);
+
+    // Create JavaScript
+    const mainJs = `// Main JavaScript file
 document.addEventListener('DOMContentLoaded', function() {
     console.log('${projectName} - Created with Jarvis AI Assistant');
     
@@ -1143,11 +1151,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });`;
-        
-        fs.writeFileSync(path.join(projectPath, 'js', 'main.js'), mainJs);
-        
-        // Create README.md
-        const readmeMd = `# ${projectName}
+
+    fs.writeFileSync(path.join(projectPath, 'js', 'main.js'), mainJs);
+
+    // Create README.md
+    const readmeMd = `# ${projectName}
 
 This static website was generated with Jarvis AI Assistant.
 
@@ -1171,13 +1179,17 @@ Simply open the \`index.html\` file in your browser to view the website.
 
 Feel free to modify the HTML, CSS, and JavaScript files to customize the website to your needs.
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'README.md'), readmeMd);
-    }
-    
-    private createGenericProject(projectPath: string, projectName: string, projectType: string): void {
-        // Create a basic README.md file
-        const readmeMd = `# ${projectName}
+
+    fs.writeFileSync(path.join(projectPath, 'README.md'), readmeMd);
+  }
+
+  private createGenericProject(
+    projectPath: string,
+    projectName: string,
+    projectType: string
+  ): void {
+    // Create a basic README.md file
+    const readmeMd = `# ${projectName}
 
 This ${projectType} project was generated with Jarvis AI Assistant.
 
@@ -1196,16 +1208,16 @@ This is a placeholder project structure. You'll need to add the appropriate file
 2. Configure your build system
 3. Start coding!
 `;
-        
-        fs.writeFileSync(path.join(projectPath, 'README.md'), readmeMd);
-        
-        // Create src directory
-        fs.mkdirSync(path.join(projectPath, 'src'), { recursive: true });
-        
-        // Create a placeholder file
-        fs.writeFileSync(
-            path.join(projectPath, 'src', 'index.js'),
-            `// Placeholder file for ${projectName}\n// Generated by Jarvis AI Assistant\n`
-        );
-    }
+
+    fs.writeFileSync(path.join(projectPath, 'README.md'), readmeMd);
+
+    // Create src directory
+    fs.mkdirSync(path.join(projectPath, 'src'), { recursive: true });
+
+    // Create a placeholder file
+    fs.writeFileSync(
+      path.join(projectPath, 'src', 'index.js'),
+      `// Placeholder file for ${projectName}\n// Generated by Jarvis AI Assistant\n`
+    );
+  }
 }

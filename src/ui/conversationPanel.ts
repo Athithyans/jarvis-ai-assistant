@@ -1,173 +1,182 @@
 import * as vscode from 'vscode';
 import { LocalModelService } from '../services/localModelService';
-import { ConversationHistoryService, ConversationMessage } from '../services/conversationHistoryService';
+import {
+  ConversationHistoryService,
+  ConversationMessage,
+} from '../services/conversationHistoryService';
 
 /**
  * Manages the conversation panel UI
  */
 export class ConversationPanel {
-    public static currentPanel: ConversationPanel | undefined;
-    private static readonly viewType = 'jarvisConversation';
-    
-    private readonly panel: vscode.WebviewPanel;
-    private readonly extensionUri: vscode.Uri;
-    private modelService: LocalModelService;
-    private historyService: ConversationHistoryService;
-    private disposables: vscode.Disposable[] = [];
-    
-    private constructor(
-        panel: vscode.WebviewPanel, 
-        extensionUri: vscode.Uri, 
-        modelService: LocalModelService,
-        historyService: ConversationHistoryService
-    ) {
-        this.panel = panel;
-        this.extensionUri = extensionUri;
-        this.modelService = modelService;
-        this.historyService = historyService;
-        
-        // Set the webview's initial html content
-        this.updateWebview();
-        
-        // Listen for when the panel is disposed
-        // This happens when the user closes the panel or when the panel is closed programmatically
-        this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
-        
-        // Handle messages from the webview
-        this.panel.webview.onDidReceiveMessage(
-            async (message) => {
-                switch (message.command) {
-                    case 'askQuestion':
-                        await this.handleUserQuestion(message.text);
-                        break;
-                    case 'clearConversation':
-                        // Create a new conversation
-                        this.historyService.createConversation();
-                        this.updateWebview();
-                        break;
-                    case 'exportConversation':
-                        await this.exportConversation(message.format);
-                        break;
-                }
-            },
-            null,
-            this.disposables
-        );
-    }
-    
-    /**
-     * Creates or shows the conversation panel
-     */
-    public static createOrShow(
-        extensionUri: vscode.Uri, 
-        modelService: LocalModelService,
-        historyService: ConversationHistoryService
-    ): ConversationPanel {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn
-            : undefined;
-        
-        // If we already have a panel, show it
-        if (ConversationPanel.currentPanel) {
-            ConversationPanel.currentPanel.panel.reveal(column);
-            return ConversationPanel.currentPanel;
-        }
-        
-        // Otherwise, create a new panel
-        const panel = vscode.window.createWebviewPanel(
-            ConversationPanel.viewType,
-            'Jarvis Conversation',
-            column || vscode.ViewColumn.One,
-            {
-                // Enable JavaScript in the webview
-                enableScripts: true,
-                
-                // Restrict the webview to only load resources from the extension's directory
-                localResourceRoots: [extensionUri],
-                
-                // Retain context when hidden
-                retainContextWhenHidden: true
-            }
-        );
-        
-        ConversationPanel.currentPanel = new ConversationPanel(panel, extensionUri, modelService, historyService);
-        return ConversationPanel.currentPanel;
-    }
-    
-    /**
-     * Exports the current conversation
-     */
-    private async exportConversation(format: 'markdown' | 'html' | 'json'): Promise<void> {
-        const conversation = this.historyService.getCurrentConversation();
-        if (!conversation) {
-            vscode.window.showErrorMessage('No active conversation to export.');
-            return;
-        }
-        
-        const filePath = await this.historyService.exportConversation(conversation.id, format);
-        if (filePath) {
-            vscode.window.showInformationMessage(`Conversation exported to ${filePath}`);
-            
-            // Open the exported file
-            const document = await vscode.workspace.openTextDocument(filePath);
-            await vscode.window.showTextDocument(document);
-        }
-    }
-    
-    /**
-     * Handles a user question
-     */
-    private async handleUserQuestion(question: string): Promise<void> {
-        // Add user message to conversation history
-        this.historyService.addMessage('user', question);
-        
-        // Update the webview to show the user message
-        this.updateWebview();
-        
-        try {
-            // Get response from the model service
-            const response = await this.modelService.askQuestion(question);
-            
-            // Add assistant message to conversation history
-            this.historyService.addMessage('assistant', response);
-            
-            // Update the webview to show the assistant message
+  public static currentPanel: ConversationPanel | undefined;
+  private static readonly viewType = 'jarvisConversation';
+
+  private readonly panel: vscode.WebviewPanel;
+  private readonly extensionUri: vscode.Uri;
+  private modelService: LocalModelService;
+  private historyService: ConversationHistoryService;
+  private disposables: vscode.Disposable[] = [];
+
+  private constructor(
+    panel: vscode.WebviewPanel,
+    extensionUri: vscode.Uri,
+    modelService: LocalModelService,
+    historyService: ConversationHistoryService
+  ) {
+    this.panel = panel;
+    this.extensionUri = extensionUri;
+    this.modelService = modelService;
+    this.historyService = historyService;
+
+    // Set the webview's initial html content
+    this.updateWebview();
+
+    // Listen for when the panel is disposed
+    // This happens when the user closes the panel or when the panel is closed programmatically
+    this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
+
+    // Handle messages from the webview
+    this.panel.webview.onDidReceiveMessage(
+      async message => {
+        switch (message.command) {
+          case 'askQuestion':
+            await this.handleUserQuestion(message.text);
+            break;
+          case 'clearConversation':
+            // Create a new conversation
+            this.historyService.createConversation();
             this.updateWebview();
-        } catch (error) {
-            // Add error message to conversation history
-            this.historyService.addMessage('assistant', `Error: ${error}`);
-            
-            // Update the webview to show the error message
-            this.updateWebview();
+            break;
+          case 'exportConversation':
+            await this.exportConversation(message.format);
+            break;
         }
+      },
+      null,
+      this.disposables
+    );
+  }
+
+  /**
+   * Creates or shows the conversation panel
+   */
+  public static createOrShow(
+    extensionUri: vscode.Uri,
+    modelService: LocalModelService,
+    historyService: ConversationHistoryService
+  ): ConversationPanel {
+    const column = vscode.window.activeTextEditor
+      ? vscode.window.activeTextEditor.viewColumn
+      : undefined;
+
+    // If we already have a panel, show it
+    if (ConversationPanel.currentPanel) {
+      ConversationPanel.currentPanel.panel.reveal(column);
+      return ConversationPanel.currentPanel;
     }
-    
-    /**
-     * Updates the webview content
-     */
-    private updateWebview(): void {
-        this.panel.webview.html = this.getHtmlForWebview();
+
+    // Otherwise, create a new panel
+    const panel = vscode.window.createWebviewPanel(
+      ConversationPanel.viewType,
+      'Jarvis Conversation',
+      column || vscode.ViewColumn.One,
+      {
+        // Enable JavaScript in the webview
+        enableScripts: true,
+
+        // Restrict the webview to only load resources from the extension's directory
+        localResourceRoots: [extensionUri],
+
+        // Retain context when hidden
+        retainContextWhenHidden: true,
+      }
+    );
+
+    ConversationPanel.currentPanel = new ConversationPanel(
+      panel,
+      extensionUri,
+      modelService,
+      historyService
+    );
+    return ConversationPanel.currentPanel;
+  }
+
+  /**
+   * Exports the current conversation
+   */
+  private async exportConversation(format: 'markdown' | 'html' | 'json'): Promise<void> {
+    const conversation = this.historyService.getCurrentConversation();
+    if (!conversation) {
+      vscode.window.showErrorMessage('No active conversation to export.');
+      return;
     }
-    
-    /**
-     * Gets the HTML for the webview
-     */
-    private getHtmlForWebview(): string {
-        // Get the current conversation
-        const conversation = this.historyService.getCurrentConversation();
-        const messages = conversation ? conversation.messages : [];
-        
-        // Convert messages to HTML
-        const messagesHtml = messages.map(message => {
-            const isUser = message.role === 'user';
-            const messageClass = isUser ? 'user-message' : 'assistant-message';
-            const avatarIcon = isUser ? '👤' : '🤖';
-            const formattedTime = new Date(message.timestamp).toLocaleTimeString();
-            
-            // Format the message content with markdown-like syntax
-            const formattedContent = this.formatMessageContent(message.content);
-            
-            return `
+
+    const filePath = await this.historyService.exportConversation(conversation.id, format);
+    if (filePath) {
+      vscode.window.showInformationMessage(`Conversation exported to ${filePath}`);
+
+      // Open the exported file
+      const document = await vscode.workspace.openTextDocument(filePath);
+      await vscode.window.showTextDocument(document);
+    }
+  }
+
+  /**
+   * Handles a user question
+   */
+  private async handleUserQuestion(question: string): Promise<void> {
+    // Add user message to conversation history
+    this.historyService.addMessage('user', question);
+
+    // Update the webview to show the user message
+    this.updateWebview();
+
+    try {
+      // Get response from the model service
+      const response = await this.modelService.askQuestion(question);
+
+      // Add assistant message to conversation history
+      this.historyService.addMessage('assistant', response);
+
+      // Update the webview to show the assistant message
+      this.updateWebview();
+    } catch (error) {
+      // Add error message to conversation history
+      this.historyService.addMessage('assistant', `Error: ${error}`);
+
+      // Update the webview to show the error message
+      this.updateWebview();
+    }
+  }
+
+  /**
+   * Updates the webview content
+   */
+  private updateWebview(): void {
+    this.panel.webview.html = this.getHtmlForWebview();
+  }
+
+  /**
+   * Gets the HTML for the webview
+   */
+  private getHtmlForWebview(): string {
+    // Get the current conversation
+    const conversation = this.historyService.getCurrentConversation();
+    const messages = conversation ? conversation.messages : [];
+
+    // Convert messages to HTML
+    const messagesHtml = messages
+      .map(message => {
+        const isUser = message.role === 'user';
+        const messageClass = isUser ? 'user-message' : 'assistant-message';
+        const avatarIcon = isUser ? '👤' : '🤖';
+        const formattedTime = new Date(message.timestamp).toLocaleTimeString();
+
+        // Format the message content with markdown-like syntax
+        const formattedContent = this.formatMessageContent(message.content);
+
+        return `
                 <div class="message ${messageClass}">
                     <div class="message-avatar">${avatarIcon}</div>
                     <div class="message-content">
@@ -179,9 +188,10 @@ export class ConversationPanel {
                     </div>
                 </div>
             `;
-        }).join('');
-        
-        return `<!DOCTYPE html>
+      })
+      .join('');
+
+    return `<!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
@@ -359,13 +369,17 @@ export class ConversationPanel {
             </div>
             
             <div class="conversation-container" id="conversationContainer">
-                ${messagesHtml.length > 0 ? messagesHtml : `
+                ${
+                  messagesHtml.length > 0
+                    ? messagesHtml
+                    : `
                     <div class="empty-conversation">
                         <h2>Welcome to Jarvis AI Assistant</h2>
                         <p>Ask me anything about programming, debugging, or project development.</p>
                         <p>I'm here to help you be more productive!</p>
                     </div>
-                `}
+                `
+                }
             </div>
             
             <div class="input-container">
@@ -460,61 +474,61 @@ export class ConversationPanel {
             </script>
         </body>
         </html>`;
+  }
+
+  /**
+   * Formats a timestamp
+   */
+  private formatTime(date: Date): string {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /**
+   * Formats message content with markdown-like syntax
+   */
+  private formatMessageContent(content: string): string {
+    // Convert code blocks
+    content = content.replace(/```(\w+)?\n([\s\S]*?)\n```/g, (_, language, code) => {
+      return `<pre><code>${this.escapeHtml(code)}</code></pre>`;
+    });
+
+    // Convert inline code
+    content = content.replace(/`([^`]+)`/g, (_, code) => {
+      return `<code>${this.escapeHtml(code)}</code>`;
+    });
+
+    // Convert line breaks
+    content = content.replace(/\n/g, '<br>');
+
+    return content;
+  }
+
+  /**
+   * Escapes HTML special characters
+   */
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  /**
+   * Disposes of the panel
+   */
+  public dispose(): void {
+    ConversationPanel.currentPanel = undefined;
+
+    // Clean up our resources
+    this.panel.dispose();
+
+    while (this.disposables.length) {
+      const disposable = this.disposables.pop();
+      if (disposable) {
+        disposable.dispose();
+      }
     }
-    
-    /**
-     * Formats a timestamp
-     */
-    private formatTime(date: Date): string {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    /**
-     * Formats message content with markdown-like syntax
-     */
-    private formatMessageContent(content: string): string {
-        // Convert code blocks
-        content = content.replace(/```(\w+)?\n([\s\S]*?)\n```/g, (_, language, code) => {
-            return `<pre><code>${this.escapeHtml(code)}</code></pre>`;
-        });
-        
-        // Convert inline code
-        content = content.replace(/`([^`]+)`/g, (_, code) => {
-            return `<code>${this.escapeHtml(code)}</code>`;
-        });
-        
-        // Convert line breaks
-        content = content.replace(/\n/g, '<br>');
-        
-        return content;
-    }
-    
-    /**
-     * Escapes HTML special characters
-     */
-    private escapeHtml(text: string): string {
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-    
-    /**
-     * Disposes of the panel
-     */
-    public dispose(): void {
-        ConversationPanel.currentPanel = undefined;
-        
-        // Clean up our resources
-        this.panel.dispose();
-        
-        while (this.disposables.length) {
-            const disposable = this.disposables.pop();
-            if (disposable) {
-                disposable.dispose();
-            }
-        }
-    }
+  }
 }
