@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "publisher": "athithyansuresh",
   "description": "A powerful, free AI assistant for VSCode that provides code completion, answers programming questions, assists with debugging, and helps with project scaffolding.",
-  "main": "./dist/extension.js",
+  "main": "./out/extension.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/athithyans/jarvis-ai-assistant.git"
@@ -163,13 +163,14 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "webpack --mode production",
+    "vscode:prepublish": "webpack --config webpack.prod.js",
     "compile": "webpack --mode development",
+    "compile:prod": "webpack --config webpack.prod.js",
     "watch": "webpack --mode development --watch",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./out/test/runTest.js",
-    "test:ci": "xvfb-run -a node ./out/test/runTest.js",
-    "package": "vsce package",
+    "test:ci": "bash ./scripts/run-tests.sh",
+    "package": "npm run compile:prod && vsce package",
     "lint": "npx eslint src --ext ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "prepare-release": "npm run lint && npm run test && npm run package",

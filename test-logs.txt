@@ -1,0 +1,19 @@
+2025-06-09T11:10:05.620Z - Running tests with the following configuration:
+    - Extension path: /home/sketchbrahma/Desktop/Training projects/Jarvis
+    - Test path: /home/sketchbrahma/Desktop/Training projects/Jarvis/out/test/suite/index
+    - Launch args: ["--disable-extensions"]
+    - CI environment: No
+    - Display available: :0
+2025-06-09T11:13:34.515Z - Running tests with the following configuration:
+    - Extension path: /home/sketchbrahma/Desktop/Training projects/Jarvis
+    - Test path: /home/sketchbrahma/Desktop/Training projects/Jarvis/out/test/suite/index
+    - Launch args: ["--disable-extensions"]
+    - CI environment: No
+    - Display available: :0
+2025-06-09T11:13:43.911Z - Failed to run tests: Test run failed with code 1
+2025-06-09T11:15:36.628Z - Running tests with the following configuration:
+    - Extension path: /home/sketchbrahma/Desktop/Training projects/Jarvis
+    - Test path: /home/sketchbrahma/Desktop/Training projects/Jarvis/out/test/suite/index
+    - Launch args: ["--disable-extensions"]
+    - CI environment: No
+    - Display available: :0
