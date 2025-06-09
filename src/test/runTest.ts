@@ -10,6 +10,12 @@ function log(message: string): void {
 
   // Append to log file
   fs.appendFileSync(logPath, logMessage, { encoding: 'utf8' });
+
+  // Also log to console in CI for better debugging
+  if (process.env.CI === 'true') {
+    // eslint-disable-next-line no-console
+    console.log(`[Jarvis Test] ${message}`);
+  }
 }
 
 async function main(): Promise<void> {
@@ -56,6 +62,14 @@ async function main(): Promise<void> {
         }
       }
     }
+
+    // Log test configuration
+    log(`Running tests with the following configuration:
+    - Extension path: ${extensionDevelopmentPath}
+    - Test path: ${extensionTestsPath}
+    - Launch args: ${JSON.stringify(launchArgs)}
+    - CI environment: ${isCI ? 'Yes' : 'No'}
+    - Display available: ${process.env.DISPLAY || 'Not set'}`);
 
     // Download VS Code, unzip it and run the integration test
     await runTests({

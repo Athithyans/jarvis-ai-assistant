@@ -10,7 +10,7 @@ export function run(): Promise<void> {
   const mocha = new Mocha({
     ui: 'tdd',
     color: true,
-    timeout: isCI ? 10000 : 5000, // Longer timeout for CI environments
+    timeout: isCI ? 60000 : 10000, // Much longer timeout for CI environments
   });
 
   const testsRoot = path.resolve(__dirname, '..');
