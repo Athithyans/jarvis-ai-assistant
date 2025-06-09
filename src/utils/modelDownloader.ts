@@ -78,7 +78,10 @@ export class ModelDownloader {
    * @param filePath The path to the file to verify
    * @param expectedChecksum The expected checksum
    */
-  public static async verifyChecksum(filePath: string, expectedChecksum: string): Promise<boolean> {
+  public static async verifyChecksum(
+    _filePath: string,
+    _expectedChecksum: string
+  ): Promise<boolean> {
     // This is a placeholder. In a real implementation, you would calculate
     // the checksum of the file and compare it to the expected value.
     return true;

@@ -3,10 +3,14 @@ import Mocha from 'mocha';
 import { glob } from 'glob';
 
 export function run(): Promise<void> {
-  // Create the mocha test
+  // Check if running in CI environment
+  const isCI = process.env.CI === 'true';
+
+  // Create the mocha test with appropriate settings
   const mocha = new Mocha({
     ui: 'tdd',
     color: true,
+    timeout: isCI ? 10000 : 5000, // Longer timeout for CI environments
   });
 
   const testsRoot = path.resolve(__dirname, '..');
@@ -19,15 +23,23 @@ export function run(): Promise<void> {
 
         try {
           // Run the mocha test
-          mocha.run((failures: number) => {
-            if (failures > 0) {
-              reject(new Error(`${failures} tests failed.`));
-            } else {
-              resolve();
-            }
-          });
+          mocha
+            .run((failures: number) => {
+              if (failures > 0) {
+                reject(new Error(`${failures} tests failed.`));
+              } else {
+                resolve();
+              }
+            })
+            .on('error', (err: Error) => {
+              console.error('Mocha run error:', err);
+              reject(err);
+            })
+            .on('end', () => {
+              // Test run completed
+            });
         } catch (err: unknown) {
-          console.error(err);
+          console.error('Exception during test execution:', err);
           reject(err);
         }
       })

@@ -69,7 +69,7 @@ export class RefactorCodeCommand {
         title: `Jarvis is refactoring your code (${refactoringOption.label})...`,
         cancellable: false,
       },
-      async progress => {
+      async _progress => {
         try {
           // Create a prompt for the refactoring task
           const prompt = `You are Jarvis, an AI assistant specialized in code refactoring. I have some ${languageId} code that I want to refactor for "${refactoringOption.label}". 
@@ -105,10 +105,7 @@ Return only the refactored code without explanations, wrapped in a code block.`;
           });
 
           // Show the diff document
-          const diffEditor = await vscode.window.showTextDocument(
-            diffDocument,
-            vscode.ViewColumn.Beside
-          );
+          await vscode.window.showTextDocument(diffDocument, vscode.ViewColumn.Beside);
 
           // Ask if the user wants to apply the changes
           const applyChanges = await vscode.window.showInformationMessage(
