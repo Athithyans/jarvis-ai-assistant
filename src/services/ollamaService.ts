@@ -244,27 +244,65 @@ export class OllamaService {
 
     const mergedOptions = { ...defaultOptions, ...options };
 
-    const response = await fetch(`${this.apiBaseUrl}/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: this.modelName,
-        prompt,
-        temperature: mergedOptions.temperature,
-        max_tokens: mergedOptions.maxTokens,
-        stream: mergedOptions.stream,
-      }),
-    });
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to generate response: ${errorText}`);
+      const response = await fetch(`${this.apiBaseUrl}/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: this.modelName,
+          prompt,
+          temperature: mergedOptions.temperature,
+          max_tokens: mergedOptions.maxTokens,
+          stream: mergedOptions.stream,
+        }),
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        if (response.status === 404) {
+          throw new Error(
+            `Model '${this.modelName}' not found. Please check if the model is correctly installed.`
+          );
+        } else if (response.status === 500) {
+          throw new Error(
+            `Server error: ${errorText}. Please check if Ollama is running correctly.`
+          );
+        } else if (response.status === 408 || response.status === 504) {
+          throw new Error(
+            'Request timed out. The model might be too large for your system or Ollama is overloaded.'
+          );
+        } else {
+          throw new Error(`Failed to generate response: ${errorText}`);
+        }
+      }
+
+      const data = (await response.json()) as { response: string };
+      return data.response;
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error(
+            'Request timed out. Please check your network connection and Ollama server status.'
+          );
+        } else if (error.message.includes('ECONNREFUSED') || error.message.includes('ENOTFOUND')) {
+          throw new Error(
+            `Cannot connect to Ollama at ${this.apiBaseUrl}. Please check if Ollama is running.`
+          );
+        } else if (error.message.includes('Failed to fetch')) {
+          throw new Error(
+            'Network error. Please check your internet connection and Ollama server status.'
+          );
+        }
+        throw error;
+      }
+      throw new Error(`Unknown error: ${String(error)}`);
     }
-
-    const data = (await response.json()) as { response: string };
-    return data.response;
   }
 
   /**
@@ -274,51 +312,98 @@ export class OllamaService {
     prompt: string,
     onToken: (token: string) => void,
     onComplete: (fullResponse: string) => void,
+    onError: (error: Error) => void,
     options: {
       temperature?: number;
       maxTokens?: number;
     } = {}
   ): Promise<void> {
     if (!this.isOllamaRunning) {
-      throw new Error('Ollama is not running. Please initialize the service first.');
+      onError(new Error('Ollama is not running. Please initialize the service first.'));
+      return;
     }
 
     const defaultOptions = {
-      temperature: 0.7,
-      maxTokens: 2048,
+      temperature: this.config.get('temperature', 0.7),
+      maxTokens: this.config.get('maxTokens', 2048),
     };
 
     const mergedOptions = { ...defaultOptions, ...options };
 
-    const response = await fetch(`${this.apiBaseUrl}/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: this.modelName,
-        prompt,
-        temperature: mergedOptions.temperature,
-        max_tokens: mergedOptions.maxTokens,
-        stream: true,
-      }),
-    });
+    // Create controller at this scope level so it's accessible throughout the function
+    const controller = new AbortController();
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to generate streaming response: ${errorText}`);
-    }
+    try {
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    // For node-fetch v2, we need to handle the stream differently
-    if (!response.body) {
-      throw new Error('Response body is null');
-    }
+      const response = await fetch(`${this.apiBaseUrl}/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: this.modelName,
+          prompt,
+          temperature: mergedOptions.temperature,
+          max_tokens: mergedOptions.maxTokens,
+          stream: true,
+        }),
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
 
-    let fullResponse = '';
+      if (!response.ok) {
+        const errorText = await response.text();
+        if (response.status === 404) {
+          onError(
+            new Error(
+              `Model '${this.modelName}' not found. Please check if the model is correctly installed.`
+            )
+          );
+          return;
+        } else if (response.status === 500) {
+          onError(
+            new Error(`Server error: ${errorText}. Please check if Ollama is running correctly.`)
+          );
+          return;
+        } else if (response.status === 408 || response.status === 504) {
+          onError(
+            new Error(
+              'Request timed out. The model might be too large for your system or Ollama is overloaded.'
+            )
+          );
+          return;
+        } else {
+          onError(new Error(`Failed to generate streaming response: ${errorText}`));
+          return;
+        }
+      }
 
-    // Process the stream
-    const processStream = async (): Promise<void> => {
+      // For node-fetch v2, we need to handle the stream differently
+      if (!response.body) {
+        onError(new Error('Response body is null'));
+        return;
+      }
+
+      let fullResponse = '';
+      let lastActivityTime = Date.now();
+      const inactivityTimeout = 60000; // 1 minute timeout for inactivity
+      const inactivityTimer = setInterval(() => {
+        if (Date.now() - lastActivityTime > inactivityTimeout) {
+          clearInterval(inactivityTimer);
+          // For node-fetch, we can't directly destroy the stream, but we can stop processing it
+          // by removing all listeners and letting it be garbage collected
+          response.body.removeAllListeners();
+          // Also abort the controller if it's still active
+          if (controller && !controller.signal.aborted) {
+            controller.abort();
+          }
+          onError(new Error('Stream timed out due to inactivity. The model might be stuck.'));
+        }
+      }, 5000);
+
+      // Process the stream
       response.body.on('data', (chunk: Buffer) => {
+        lastActivityTime = Date.now();
         // Convert the chunk to text
         const chunkText = chunk.toString('utf8');
 
@@ -335,6 +420,7 @@ export class OllamaService {
             }
 
             if (data.done) {
+              clearInterval(inactivityTimer);
               onComplete(fullResponse);
             }
           } catch (error) {
@@ -344,15 +430,41 @@ export class OllamaService {
       });
 
       response.body.on('end', () => {
+        clearInterval(inactivityTimer);
         onComplete(fullResponse);
       });
 
       response.body.on('error', error => {
-        throw error;
+        clearInterval(inactivityTimer);
+        onError(error instanceof Error ? error : new Error(String(error)));
       });
-    };
-
-    await processStream();
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          onError(
+            new Error(
+              'Request timed out. Please check your network connection and Ollama server status.'
+            )
+          );
+        } else if (error.message.includes('ECONNREFUSED') || error.message.includes('ENOTFOUND')) {
+          onError(
+            new Error(
+              `Cannot connect to Ollama at ${this.apiBaseUrl}. Please check if Ollama is running.`
+            )
+          );
+        } else if (error.message.includes('Failed to fetch')) {
+          onError(
+            new Error(
+              'Network error. Please check your internet connection and Ollama server status.'
+            )
+          );
+        } else {
+          onError(error);
+        }
+      } else {
+        onError(new Error(`Unknown error: ${String(error)}`));
+      }
+    }
   }
 
   /**
