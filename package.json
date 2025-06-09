@@ -10,7 +10,7 @@
     "url": "https://github.com/athithyans/jarvis-ai-assistant.git"
   },
   "engines": {
-    "vscode": "^1.100.0"
+    "vscode": "^1.74.0"
   },
   "categories": [
     "Programming Languages",
@@ -186,7 +186,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^16.18.86",
-    "@types/vscode": "^1.100.0",
+    "@types/vscode": "^1.74.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "@vscode/vsce": "^2.22.0",
