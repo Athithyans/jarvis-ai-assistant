@@ -52,24 +52,24 @@ Jarvis supports a wide range of programming languages and frameworks, including:
 
 ### Installation
 
-#### From VS Code Marketplace (Recommended)
+#### From GitHub Releases (Recommended)
 1. Install [Ollama](https://ollama.ai/download) on your machine
-2. Open VS Code
-3. Go to Extensions (Ctrl+Shift+X or Cmd+Shift+X on Mac)
-4. Search for "Jarvis AI Assistant"
-5. Click "Install"
-6. Restart VS Code
-7. When first activated, Jarvis will download the necessary AI model (this may take a few minutes)
-
-#### Manual Installation
-1. Install [Ollama](https://ollama.ai/download) on your machine
-2. Download the latest .vsix file from the [GitHub releases page](https://github.com/Athithyans/jarvis-ai-assistant/releases)
+2. Download the latest `.vsix` file from the [GitHub releases page](https://github.com/Athithyans/jarvis-ai-assistant/releases)
 3. Open VS Code
 4. Go to Extensions (Ctrl+Shift+X or Cmd+Shift+X on Mac)
 5. Click the "..." menu in the top-right of the Extensions panel
 6. Select "Install from VSIX..."
 7. Choose the downloaded .vsix file
 8. Restart VS Code
+9. When first activated, Jarvis will download the necessary AI model (this may take a few minutes)
+
+> **Note**: Make sure your VS Code version is 1.74.0 or higher. You can check your VS Code version by going to Help > About.
+
+#### Troubleshooting Installation
+If you encounter an error during installation that says the extension is not compatible with your VS Code version:
+1. Check your VS Code version by going to Help > About
+2. Make sure you're using VS Code version 1.74.0 or higher
+3. If needed, update your VS Code to the latest version
 
 ### Usage
 
@@ -116,7 +116,7 @@ You can also access these settings directly using the "Jarvis: Open Settings" co
 
 ## Requirements
 
-- VSCode 1.60.0 or higher
+- VSCode 1.74.0 or higher
 - [Ollama](https://ollama.ai/download) installed on your machine
 - At least 8GB of RAM (16GB recommended)
 - 4GB of free disk space for the AI models
