@@ -20,7 +20,6 @@ export class GenerateDocsCommand {
     // Get the current document
     const document = editor.document;
     const code = document.getText();
-    const fileName = path.basename(document.fileName);
     const languageId = document.languageId;
 
     // Determine the documentation format based on the language
@@ -78,7 +77,7 @@ export class GenerateDocsCommand {
         title: `Jarvis is generating ${docType.label.toLowerCase()} with ${selectedFormat.name}...`,
         cancellable: false,
       },
-      async progress => {
+      async _progress => {
         try {
           if (docType.label === 'Inline Documentation') {
             await this.generateInlineDocs(document, code, languageId, selectedFormat, editor);
@@ -140,7 +139,7 @@ Return only the fully documented code without explanations.`;
     });
 
     // Show the documented code
-    const docEditor = await vscode.window.showTextDocument(docDocument, vscode.ViewColumn.Beside);
+    await vscode.window.showTextDocument(docDocument, vscode.ViewColumn.Beside);
 
     // Ask if the user wants to apply the changes
     const applyChanges = await vscode.window.showInformationMessage(
@@ -174,7 +173,7 @@ Return only the fully documented code without explanations.`;
     document: vscode.TextDocument,
     code: string,
     languageId: string,
-    format: { name: string; description: string; example: string }
+    _format: { name: string; description: string; example: string }
   ): Promise<void> {
     // Determine the documentation file format
     const docFileFormats = [

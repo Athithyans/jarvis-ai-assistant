@@ -1,9 +1,6 @@
 import * as vscode from 'vscode';
 import { LocalModelService } from '../services/localModelService';
-import {
-  ConversationHistoryService,
-  ConversationMessage,
-} from '../services/conversationHistoryService';
+import { ConversationHistoryService } from '../services/conversationHistoryService';
 
 /**
  * Manages the conversation panel UI

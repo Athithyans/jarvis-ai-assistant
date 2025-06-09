@@ -21,17 +21,14 @@ export class CompleteCodeCommand {
 
     // Get the selected text or the entire document if nothing is selected
     let code: string;
-    let replaceRange: vscode.Range;
 
     if (selection.isEmpty) {
       // If no text is selected, use the entire document up to the cursor position
       const cursorPosition = selection.active;
       const startPosition = new vscode.Position(0, 0);
-      replaceRange = new vscode.Range(cursorPosition, cursorPosition);
       code = document.getText(new vscode.Range(startPosition, cursorPosition));
     } else {
       // Use the selected text
-      replaceRange = selection;
       code = document.getText(selection);
     }
 
@@ -45,7 +42,7 @@ export class CompleteCodeCommand {
         title: 'Jarvis is generating code...',
         cancellable: false,
       },
-      async progress => {
+      async _progress => {
         try {
           // Get code completion from the model service
           const completedCode = await this.modelService.completeCode(code, languageId);

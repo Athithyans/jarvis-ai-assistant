@@ -11,11 +11,19 @@ async function main(): Promise<void> {
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
+    // Check if running in CI environment
+    const isCI = process.env.CI === 'true';
+
     // Download VS Code, unzip it and run the integration test
     await runTests({
       extensionDevelopmentPath,
       extensionTestsPath,
-      launchArgs: ['--disable-extensions'],
+      // Add CI-specific launch arguments for headless testing
+      launchArgs: [
+        '--disable-extensions',
+        // For CI environments, run in headless mode
+        ...(isCI ? ['--disable-gpu', '--no-sandbox', '--headless'] : []),
+      ],
     });
   } catch (err) {
     console.error('Failed to run tests:', err);

@@ -13,8 +13,11 @@ import { JarvisStatusBar } from './ui/statusBar';
 import { LocalModelService } from './services/localModelService';
 import { ConversationHistoryService } from './services/conversationHistoryService';
 
-export async function activate(context: vscode.ExtensionContext) {
-  console.log('Jarvis AI Assistant is now active!');
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  // Log activation in output channel instead of console
+  const outputChannel = vscode.window.createOutputChannel('Jarvis AI Assistant');
+  outputChannel.appendLine('Jarvis AI Assistant is now active!');
+  context.subscriptions.push(outputChannel);
 
   // Initialize services
   const modelService = new LocalModelService(context);
@@ -68,6 +71,6 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 }
 
-export function deactivate() {
-  console.log('Jarvis AI Assistant is now deactivated.');
+export function deactivate(): void {
+  // Nothing to do here - cleanup is handled by disposables
 }

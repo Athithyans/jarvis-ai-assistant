@@ -87,13 +87,10 @@ export class GenerateProjectCommand {
         title: `Jarvis is generating your ${projectType.label} project...`,
         cancellable: false,
       },
-      async progress => {
+      async _progress => {
         try {
           // Get project structure from the model service
-          const projectStructure = await this.modelService.generateProject(
-            projectType.value,
-            projectName
-          );
+          await this.modelService.generateProject(projectType.value, projectName);
 
           // Create project directory
           if (!fs.existsSync(projectPath)) {

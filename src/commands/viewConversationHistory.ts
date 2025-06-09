@@ -1,6 +1,11 @@
 import * as vscode from 'vscode';
 import { ConversationHistoryService, Conversation } from '../services/conversationHistoryService';
 
+// Define a type for our quick pick items
+interface ConversationQuickPickItem extends vscode.QuickPickItem {
+  conversation: Conversation | null;
+}
+
 export class ViewConversationHistoryCommand {
   private historyService: ConversationHistoryService;
 
@@ -17,7 +22,7 @@ export class ViewConversationHistoryCommand {
     }
 
     // Create quick pick items for each conversation
-    const items = conversations.map(conversation => {
+    const items: ConversationQuickPickItem[] = conversations.map(conversation => {
       const date = new Date(conversation.updatedAt).toLocaleString();
       const messageCount = conversation.messages.length;
 
@@ -34,7 +39,7 @@ export class ViewConversationHistoryCommand {
       label: '$(trash) Clear All Conversations',
       description: 'Delete all conversation history',
       detail: 'This action cannot be undone',
-      conversation: null as any,
+      conversation: null,
     });
 
     // Show the quick pick

@@ -21,7 +21,6 @@ export class GenerateTestsCommand {
     const document = editor.document;
     const code = document.getText();
     const fileName = path.basename(document.fileName);
-    const fileExtension = path.extname(document.fileName);
     const languageId = document.languageId;
 
     // Determine the testing framework based on the language
@@ -56,7 +55,7 @@ export class GenerateTestsCommand {
         title: `Jarvis is generating tests with ${selectedFramework.name}...`,
         cancellable: false,
       },
-      async progress => {
+      async _progress => {
         try {
           // Create a prompt for the test generation task
           const prompt = `You are Jarvis, an AI assistant specialized in writing tests. I have some ${languageId} code that I want to write tests for using ${selectedFramework.name}.

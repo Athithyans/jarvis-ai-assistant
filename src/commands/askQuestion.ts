@@ -21,7 +21,7 @@ export class AskQuestionCommand {
     }
 
     // Create or show the conversation panel
-    const panel = ConversationPanel.createOrShow(
+    ConversationPanel.createOrShow(
       this.context.extensionUri,
       this.modelService,
       this.historyService
