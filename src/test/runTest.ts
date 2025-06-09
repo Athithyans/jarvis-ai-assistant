@@ -37,15 +37,23 @@ async function main(): Promise<void> {
 
       // Add CI-specific arguments
       launchArgs.push('--no-sandbox');
-      // Note: We're not using --headless as it's causing issues
+      launchArgs.push('--disable-gpu');
 
-      // Skip tests in CI environment if needed
-      log('Running in CI environment - tests may be skipped if display is not available');
+      // Check if we're running in Xvfb
+      const hasDisplay = !!process.env.DISPLAY;
 
-      // Check if we should skip tests entirely in this environment
-      if (process.env.SKIP_VSCODE_TESTS === 'true') {
-        log('Skipping VS Code tests as per SKIP_VSCODE_TESTS environment variable');
-        process.exit(0); // Exit with success
+      if (hasDisplay) {
+        log('Running in CI environment with display (likely Xvfb)');
+      } else {
+        log('Running in CI environment without display - this may cause issues');
+
+        // Skip tests if no display and not explicitly configured to run
+        if (process.env.SKIP_VSCODE_TESTS !== 'false') {
+          log(
+            'Skipping VS Code tests due to missing display. Set SKIP_VSCODE_TESTS=false to override.'
+          );
+          process.exit(0); // Exit with success
+        }
       }
     }
 

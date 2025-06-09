@@ -168,6 +168,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./out/test/runTest.js",
+    "test:ci": "xvfb-run -a node ./out/test/runTest.js",
     "package": "vsce package",
     "lint": "npx eslint src --ext ts",
     "format": "prettier --write \"src/**/*.ts\"",

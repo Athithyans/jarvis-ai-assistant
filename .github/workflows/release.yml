@@ -17,8 +17,18 @@ jobs:
       with:
         node-version: 20
         cache: 'npm'
+    - name: Cache VS Code test binary
+      uses: actions/cache@v3
+      with:
+        path: .vscode-test
+        key: ${{ runner.os }}-vscode-${{ hashFiles('package.json') }}
     - run: npm ci
+    - run: npm run lint
     - run: npm run compile
+    - name: Install Xvfb (for headless VS Code testing)
+      run: sudo apt-get install -y xvfb
+    - name: Run tests with Xvfb
+      run: npm run test:ci
     - name: Package Extension
       run: npm run package
     
