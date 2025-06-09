@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "publisher": "athithyansuresh",
   "description": "A powerful, free AI assistant for VSCode that provides code completion, answers programming questions, assists with debugging, and helps with project scaffolding.",
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/athithyans/jarvis-ai-assistant.git"
@@ -163,9 +163,9 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "webpack --mode production",
+    "compile": "webpack --mode development",
+    "watch": "webpack --mode development --watch",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./out/test/runTest.js",
     "test:ci": "xvfb-run -a node ./out/test/runTest.js",
@@ -201,11 +201,22 @@
     "glob": "^10.3.10",
     "mocha": "^10.3.0",
     "prettier": "^3.2.5",
-    "typescript": "^5.3.3"
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.3.3",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
   },
   "dependencies": {
     "@types/node-fetch": "^2.6.12",
+    "data-uri-to-buffer": "^6.0.2",
+    "fetch-blob": "^4.0.0",
+    "formdata-polyfill": "^4.0.10",
     "node-fetch": "^2.7.0",
+    "web-streams-polyfill": "^4.1.0",
+    "whatwg-url": "^14.2.0",
     "ws": "^8.13.0"
+  },
+  "vsce": {
+    "dependencies": true
   }
 }
