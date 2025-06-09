@@ -172,7 +172,8 @@
     "package": "vsce package",
     "lint": "npx eslint src --ext ts",
     "format": "prettier --write \"src/**/*.ts\"",
-    "prepare-release": "npm run lint && npm run test && npm run package"
+    "prepare-release": "npm run lint && npm run test && npm run package",
+    "create-github-release": "scripts/create-github-release.sh"
   },
   "keywords": [
     "ai",

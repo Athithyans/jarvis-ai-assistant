@@ -13,7 +13,7 @@ Before using Jarvis, you need to install:
 
 ### Installing Jarvis AI Assistant
 
-1. Download the latest `.vsix` file from the [Releases](https://github.com/yourusername/jarvis-ai-assistant/releases) page
+1. Download the latest `.vsix` file from the [Releases](https://github.com/Athithyans/jarvis-ai-assistant/releases) page
 2. Open VS Code
 3. Go to the Extensions view (Ctrl+Shift+X)
 4. Click the "..." menu at the top and select "Install from VSIX..."
@@ -83,7 +83,7 @@ To configure Jarvis:
 If you encounter any issues:
 
 1. Check the [Troubleshooting](README.md#troubleshooting) section in the README
-2. Visit the [GitHub Issues](https://github.com/yourusername/jarvis-ai-assistant/issues) page
+2. Visit the [GitHub Issues](https://github.com/Athithyans/jarvis-ai-assistant/issues) page
 3. Create a new issue if your problem isn't already reported
 
 ## Next Steps
